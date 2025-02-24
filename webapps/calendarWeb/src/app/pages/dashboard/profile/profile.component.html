@@ -1,0 +1,19 @@
+<!-- src/app/pages/dashboard/profile/profile.component.html -->
+<div class="profile-container">
+  <h2>Perfil de Usuario</h2>
+  <div class="profile-details">
+    <p><strong>Nombre de Usuario:</strong> {{ userData.username }}</p>
+    <p><strong>Email:</strong> {{ userData.email }}</p>
+    <p><strong>Rol:</strong> {{ userData.role }}</p>
+  </div>
+
+  <!-- Mostrar cursos inscritos solo si el usuario no es admin -->
+  <div class="courses-info" *ngIf="userData.role !== 'admin'">
+    <h3>Cursos inscritos</h3>
+    <p *ngIf="loading">Cargando cursos...</p>
+    <p *ngIf="!loading && !error">
+      Tienes <strong>{{ coursesCount }}</strong> curso(s) inscrito(s).
+    </p>
+    <p *ngIf="error" class="error">{{ error }}</p>
+  </div>
+</div>

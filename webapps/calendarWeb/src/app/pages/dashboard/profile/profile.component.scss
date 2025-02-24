@@ -1,0 +1,43 @@
+/* src/app/pages/dashboard/profile/profile.component.scss */
+.profile-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 1rem;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    text-align: left;
+  
+    h2 {
+      text-align: center;
+      color: #003366;
+      margin-bottom: 1rem;
+    }
+  
+    .profile-details {
+      p {
+        font-size: 1.1rem;
+        margin: 0.5rem 0;
+        strong {
+          color: #003366;
+        }
+      }
+    }
+  
+    .courses-info {
+      margin-top: 2rem;
+      h3 {
+        color: #003366;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        font-size: 1rem;
+      }
+      .error {
+        color: red;
+        font-weight: bold;
+      }
+    }
+  }
+  

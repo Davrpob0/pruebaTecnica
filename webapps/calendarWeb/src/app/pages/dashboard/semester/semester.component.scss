@@ -1,0 +1,47 @@
+/* src/app/pages/dashboard/semester/semester.component.scss */
+.semester-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1rem;
+    text-align: center;
+  
+    h2 {
+      color: #003366;
+      margin-bottom: 1rem;
+      font-size: 1.8rem;
+    }
+  
+    .loading, .no-courses {
+      margin: 1rem 0;
+      font-size: 1.1rem;
+      color: #555;
+    }
+  
+    .error {
+      color: red;
+      font-weight: bold;
+      margin: 1rem 0;
+    }
+  
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+  
+    th, td {
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+  
+    th {
+      background-color: #f5f5f5;
+      color: #003366;
+    }
+  
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+  }
+  

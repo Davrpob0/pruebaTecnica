@@ -1,0 +1,8 @@
+<div class="home-container">
+  <h2 class="welcome-message">
+    Bienvenido, {{ userData.username }}
+    <span *ngIf="userRole === 'admin'">(Administrador)</span>
+    <span *ngIf="userRole !== 'admin'">(Estudiante)</span>
+  </h2>
+  <full-calendar [options]="calendarOptions"></full-calendar>
+</div>

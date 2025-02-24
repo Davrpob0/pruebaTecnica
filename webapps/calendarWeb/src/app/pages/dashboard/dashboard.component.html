@@ -1,0 +1,37 @@
+<!-- src/app/pages/dashboard/dashboard.component.html -->
+<div class="dashboard">
+  <nav class="navbar">
+    <h1>Portal Universitario</h1>
+    <div class="user-info">
+      <span>{{ userData.username }}</span>
+      <span class="role">{{ userRole | uppercase }}</span>
+      <nav class="header-nav">
+        <button class="btn" (click)="logout()">Logout</button>
+      </nav>
+    </div>
+  </nav>
+  <div class="main-content">
+    <aside class="sidebar">
+      <ul>
+        <li (click)="navigateTo('home')">Inicio</li>
+        <li *ngIf="userRole === 'student'" (click)="navigateTo('semester')">
+          Mis Cursos
+        </li>
+        <li *ngIf="userRole === 'student'" (click)="navigateTo('add-course')">
+          Registro de Cursos
+        </li>
+        <li *ngIf="userRole === 'admin'" (click)="navigateTo('listCourses')">
+          Listado de Cursos
+        </li>
+        <li *ngIf="userRole === 'admin'" (click)="navigateTo('register')">
+          Registrar Curso
+        </li>
+        <li (click)="navigateTo('profile')">Perfil</li>
+      </ul>
+    </aside>
+    <section class="content">
+      <!-- Aquí se renderizarán los componentes hijos según la ruta -->
+      <router-outlet></router-outlet>
+    </section>
+  </div>
+</div>

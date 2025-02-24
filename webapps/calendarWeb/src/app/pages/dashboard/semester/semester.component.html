@@ -1,0 +1,33 @@
+<!-- src/app/pages/dashboard/semester/semester.component.html -->
+<div class="semester-container">
+  <h2>Mis Cursos Matriculados</h2>
+
+  <div *ngIf="loading" class="loading">Cargando cursos...</div>
+
+  <div *ngIf="error" class="error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && courses.length === 0" class="no-courses">
+    No tienes cursos matriculados para este semestre.
+  </div>
+
+  <table *ngIf="!loading && courses.length > 0">
+    <thead>
+      <tr>
+        <th>Curso</th>
+        <th>Horario</th>
+        <th>Inicio</th>
+        <th>Fin</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let course of courses">
+        <td>{{ course.nombre }}</td>
+        <td>{{ course.horario }}</td>
+        <td>{{ course.fecha_inicio }}</td>
+        <td>{{ course.fecha_final }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

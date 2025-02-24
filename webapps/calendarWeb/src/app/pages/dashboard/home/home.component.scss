@@ -1,0 +1,19 @@
+.home-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1rem;
+    text-align: center;
+  
+    .welcome-message {
+      color: #003366;
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+  }
+  
+  /* Asegúrate de que FullCalendar tenga estilos adecuados */
+  ::ng-deep .fc {
+    font-family: Arial, sans-serif;
+  }
+  

@@ -1,0 +1,42 @@
+# Node.js dependencies
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Angular build outputs y cachés
+**/dist/
+**/out-tsc/
+**/coverage/
+webapps/calendarWeb/.angular/
+webapps/calendarWeb/.cache/
+
+# PHP - Composer vendor y lock files
+networking/apiRestPHP/vendor/
+networking/apiRestPHP/composer.lock
+
+# Python - Bytecode y cache
+**/__pycache__/
+**/*.pyc
+
+# Servicios Node.js adicionales (auth) - Archivos de entorno
+services/auth/.env
+
+# Archivos de entorno globales o sensibles
+*.env
+!.env.example       # Puedes incluir un ejemplo de .env
+
+# IDE y archivos de configuración locales
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Archivos temporales y de sistema
+.DS_Store
+Thumbs.db
+/tmp/
+*.log
+
+# Otros cachés y archivos generados
+**/.cache/

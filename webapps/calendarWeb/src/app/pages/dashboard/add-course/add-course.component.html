@@ -1,0 +1,42 @@
+<h2 class="title">Cursos Disponibles</h2>
+
+<div class="courses-container">
+  <div
+    class="course-card"
+    *ngFor="let course of courses"
+    (click)="onSelectCourse(course)"
+    [class.selected]="selectedCourse?.id === course.id"
+  >
+    <h3>{{ course.nombre }}</h3>
+    <p><strong>Horario:</strong> {{ course.horario }}</p>
+    <p><strong>Fecha Inicio:</strong> {{ course.fecha_inicio }}</p>
+    <p><strong>Fecha Final:</strong> {{ course.fecha_final }}</p>
+    <p><strong>Cupos disponibles:</strong> {{ course.cupos_restantes }}</p>
+    <button class="select-button" *ngIf="selectedCourse?.id !== course.id">
+      Seleccionar
+    </button>
+  </div>
+</div>
+
+<div class="registration-form" *ngIf="selectedCourse">
+  <h3>Registrar inscripción en: {{ selectedCourse.nombre }}</h3>
+  <p>
+    El estudiante <strong>{{ enrollment.nombre_estudiante }}</strong>
+    se inscribirá en este curso.
+  </p>
+  <button type="button" class="btn-register" (click)="enroll()">
+    Registrar
+  </button>
+</div>
+
+<div class="server-response" *ngIf="enrollmentResponse">
+  <p
+    [ngClass]="{
+      success: enrollmentResponse.valid,
+      error: !enrollmentResponse.valid,
+      'fade-out': fadeResponse
+    }"
+  >
+    {{ enrollmentResponse.message }}
+  </p>
+</div>
