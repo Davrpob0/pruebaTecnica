@@ -171,7 +171,7 @@ export class HomeComponent implements OnInit {
           html: `
             <p><strong>Horario:</strong> ${course.horario}</p>
             <p><strong>Fechas:</strong> ${course.fecha_inicio} - ${course.fecha_final}</p>
-            <p><strong>Cupos:</strong> ${course.cupos}</p>
+            <p><strong>Cupos:</strong> ${course.total_cupos}</p>
           `,
           icon: 'info',
           confirmButtonText: 'Cerrar'

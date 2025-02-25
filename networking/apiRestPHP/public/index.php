@@ -8,7 +8,9 @@ use Slim\Factory\AppFactory;
 
 $app = AppFactory::create();
 
-// Middleware global para agregar cabeceras CORS a todas las solicitudes
+// ====================================================
+// Middleware Global para CORS y Body Parsing
+// ====================================================
 $app->add(function (Request $request, $handler) {
     $response = $handler->handle($request);
     return $response
@@ -16,28 +18,24 @@ $app->add(function (Request $request, $handler) {
         ->withHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 });
-
-// Middleware para parsear el body
 $app->addBodyParsingMiddleware();
 
-// Ruta OPTIONS para todas las rutas, asegurando que se retornen las cabeceras CORS y status 200
+// Ruta OPTIONS para todas las rutas, respondiendo con cabeceras CORS y status 200
 $app->options('/{routes:.+}', function (Request $request, Response $response, array $args) {
     return $response
-        ->withStatus(200)
         ->withHeader('Access-Control-Allow-Origin', '*')
         ->withHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 });
 
+// ====================================================
+// Rutas de la API
+// ====================================================
 
-
-// ---------------------- Rutas definidas claramente ----------------------
-
-// Ruta para obtener cursos (todos o filtrados por id_estudiante)
+// RUTA: Obtener cursos (con o sin filtro de id_estudiante)
 $app->get('/cursos', function (Request $request, Response $response) use ($pdo) {
     $params = $request->getQueryParams();
     if (isset($params['id_estudiante'])) {
-        // Si se envía el parámetro id_estudiante, devolver cursos en los que el estudiante está inscrito.
         $id_estudiante = $params['id_estudiante'];
         $sql = "SELECT c.id, c.nombre, c.cupos AS total_cupos, c.disponible, c.fecha_inicio, c.fecha_final, c.horario,
                        (c.cupos - COALESCE((SELECT COUNT(*) FROM estudiantes_inscritos e WHERE e.id_curso = c.id), 0)) AS cupos_restantes
@@ -48,7 +46,6 @@ $app->get('/cursos', function (Request $request, Response $response) use ($pdo) 
         $stmt->execute(['id_estudiante' => $id_estudiante]);
         $courses = $stmt->fetchAll();
     } else {
-        // Si no se envía el parámetro, devolver todos los cursos.
         $sql = "SELECT c.id, c.nombre, c.cupos AS total_cupos, c.disponible, c.fecha_inicio, c.fecha_final, c.horario,
                        (c.cupos - COALESCE(COUNT(e.id), 0)) AS cupos_restantes
                 FROM cursos_disponibles c
@@ -57,12 +54,12 @@ $app->get('/cursos', function (Request $request, Response $response) use ($pdo) 
         $stmt = $pdo->query($sql);
         $courses = $stmt->fetchAll();
     }
-    
+
     $response->getBody()->write(json_encode($courses));
     return $response->withHeader('Content-Type', 'application/json');
 });
 
-// Ruta para crear un curso
+// RUTA: Crear un nuevo curso
 $app->post('/cursos', function (Request $request, Response $response) use ($pdo) {
     $data = $request->getParsedBody();
 
@@ -83,7 +80,7 @@ $app->post('/cursos', function (Request $request, Response $response) use ($pdo)
     return $response->withStatus(201)->withHeader('Content-Type', 'application/json');
 });
 
-// Ruta para validar inscripción (reenvía a Python)
+// RUTA: Validar inscripción (reenvío al servicio Python)
 $app->post('/validator', function (Request $request, Response $response) use ($pdo) {
     $data = $request->getParsedBody();
 
@@ -116,13 +113,13 @@ $app->post('/validator', function (Request $request, Response $response) use ($p
         return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
     }
     curl_close($ch);
-    
+
     $response->getBody()->write($result);
     return $response->withHeader('Content-Type', 'application/json');
 });
 
-// Autenticación reenviada a microservicio Node.js (login)
-$app->post('/auth/login', function (Request $request, Response $response, array $args) {
+// RUTA: Autenticación para Login (reenviada a auth-service - Node.js)
+$app->post('/auth/login', function (Request $request, Response $response) {
     $url = "http://auth-service:3001/auth/login";
 
     $ch = curl_init($url);
@@ -138,13 +135,13 @@ $app->post('/auth/login', function (Request $request, Response $response, array 
         return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
     }
     curl_close($ch);
-    
+
     $response->getBody()->write($result);
     return $response->withHeader('Content-Type', 'application/json');
 });
 
-// Autenticación reenviada a microservicio Node.js (register)
-$app->post('/auth/register', function (Request $request, Response $response, array $args) {
+// RUTA: Autenticación para Register (reenviada a auth-service - Node.js)
+$app->post('/auth/register', function (Request $request, Response $response) {
     $url = "http://auth-service:3001/auth/register";
 
     $ch = curl_init($url);
@@ -160,9 +157,12 @@ $app->post('/auth/register', function (Request $request, Response $response, arr
         return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
     }
     curl_close($ch);
-    
+
     $response->getBody()->write($result);
     return $response->withHeader('Content-Type', 'application/json');
 });
 
+// ====================================================
+// Inicia la aplicación
+// ====================================================
 $app->run();
