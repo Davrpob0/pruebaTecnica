@@ -1,15 +1,30 @@
+// auth.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export interface LoginResponse {
-  token?: string;
+  token: string;
   message: string;
-  user?: {
+  user: {
+    id: number;
     username: string;
+    email: string;
     role: string;
   };
-  error?: string;
+}
+
+export interface RegisterResponse {
+  message: string;
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    role: string;
+    isActive: boolean;
+    createdAt: string;
+  };
 }
 
 export interface RegisterData {
@@ -23,19 +38,28 @@ export interface RegisterData {
   providedIn: 'root'
 })
 export class AuthService {
-  // Ajusta la URL base según tu configuración; aquí usamos el proxy PHP en localhost:8080
   private baseUrl = 'http://localhost:8080/auth';
-
 
   constructor(private http: HttpClient) { }
 
-  // Login sin requerir el campo "role"
-  login(credentials: { username: string; password: string }): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.baseUrl}/login`, credentials);
+  private extractJson<T>(responseText: string): T {
+    // Busca el primer carácter '{' y extrae desde allí
+    const jsonStart = responseText.indexOf('{');
+    const jsonStr = jsonStart !== -1 ? responseText.substring(jsonStart) : responseText;
+    return JSON.parse(jsonStr);
   }
 
-  // Registro de un usuario (admin o student)
-  register(data: RegisterData): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.baseUrl}/register`, data);
+  login(credentials: { username: string; password: string }): Observable<LoginResponse> {
+    // Se solicita la respuesta como texto para poder limpiar el "echo" extra
+    return this.http.post(`${this.baseUrl}/login`, credentials, { responseType: 'text' }).pipe(
+      map(responseText => this.extractJson<LoginResponse>(responseText))
+    );
+  }
+
+  register(data: RegisterData): Observable<RegisterResponse> {
+    // Se solicita la respuesta como texto para poder limpiar el "echo" extra
+    return this.http.post(`${this.baseUrl}/register`, data, { responseType: 'text' }).pipe(
+      map(responseText => this.extractJson<RegisterResponse>(responseText))
+    );
   }
 }

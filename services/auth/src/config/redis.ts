@@ -1,23 +1,16 @@
 import { createClient } from 'redis';
-import dotenv from 'dotenv';
 import session from 'express-session';
+const { RedisStore } = require("connect-redis");
 
-dotenv.config();
-// Inicializa el almacenamiento de Redis con una función de fábrica
-const { RedisStore } = require("connect-redis")
-
-// Configuración del cliente de Redis
-const redisClient = createClient({
-  url: process.env.REDIS_URL,
-  password: process.env.REDIS_PASSWORD, // Si se requiere autenticación
-});
+// Cliente Redis usando únicamente la URL completa
+const redisClient = createClient({ url: process.env.REDIS_URL });
 
 redisClient.on('error', (err) => console.error('Redis Client Error:', err));
 redisClient.on('connect', () => console.log('Redis conectado exitosamente'));
 redisClient.on('ready', () => console.log('Redis está listo para usarse'));
 redisClient.on('reconnecting', () => console.log('Intentando reconectar a Redis...'));
 
-// Asegurar la conexión al cliente Redis
+// Conectar al cliente Redis
 (async () => {
   try {
     await redisClient.connect();
@@ -27,10 +20,10 @@ redisClient.on('reconnecting', () => console.log('Intentando reconectar a Redis.
   }
 })();
 
-// Configurar la tienda Redis usando la función de fábrica
+// Configuración del almacén de sesiones con Redis
 const redisStore = new RedisStore({
   client: redisClient,
-  prefix: 'session:', // Prefijo opcional para organizar claves de sesión
+  prefix: 'session:',
 });
 
 // Middleware de sesión
@@ -38,11 +31,11 @@ const sessionMiddleware = session({
   store: redisStore,
   secret: process.env.SESSION_SECRET || 'secret',
   resave: false,
-  saveUninitialized: false, // No guardar sesiones no inicializadas
+  saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // Cookies seguras solo en producción
+    secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24, // 1 día
+    maxAge: 1000 * 60 * 60 * 24,
   },
 });
 

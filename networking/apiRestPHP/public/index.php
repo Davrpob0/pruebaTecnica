@@ -1,5 +1,4 @@
 <?php
-
 require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../src/db.php';
 
@@ -9,9 +8,7 @@ use Slim\Factory\AppFactory;
 
 $app = AppFactory::create();
 
-$app->addBodyParsingMiddleware();
-
-// Middleware general para agregar headers CORS
+// Middleware global para agregar cabeceras CORS a todas las solicitudes
 $app->add(function (Request $request, $handler) {
     $response = $handler->handle($request);
     return $response
@@ -20,28 +17,57 @@ $app->add(function (Request $request, $handler) {
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 });
 
+// Middleware para parsear el body
+$app->addBodyParsingMiddleware();
+
+// Ruta OPTIONS para todas las rutas, asegurando que se retornen las cabeceras CORS y status 200
+$app->options('/{routes:.+}', function (Request $request, Response $response, array $args) {
+    return $response
+        ->withStatus(200)
+        ->withHeader('Access-Control-Allow-Origin', '*')
+        ->withHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
+        ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+});
+
+
 
 // ---------------------- Rutas definidas claramente ----------------------
 
+// Ruta para obtener cursos (todos o filtrados por id_estudiante)
 $app->get('/cursos', function (Request $request, Response $response) use ($pdo) {
-    $sql = "SELECT c.id, c.nombre, c.cupos AS total_cupos, c.disponible, c.fecha_inicio, c.fecha_final, c.horario,
-                   (c.cupos - COALESCE(COUNT(e.id), 0)) AS cupos_restantes
-            FROM cursos_disponibles c
-            LEFT JOIN estudiantes_inscritos e ON c.id = e.id_curso
-            GROUP BY c.id, c.nombre, c.cupos, c.disponible, c.fecha_inicio, c.fecha_final, c.horario";
-
-    $stmt = $pdo->query($sql);
-    $cursos = $stmt->fetchAll();
-
-    $response->getBody()->write(json_encode($cursos));
+    $params = $request->getQueryParams();
+    if (isset($params['id_estudiante'])) {
+        // Si se envía el parámetro id_estudiante, devolver cursos en los que el estudiante está inscrito.
+        $id_estudiante = $params['id_estudiante'];
+        $sql = "SELECT c.id, c.nombre, c.cupos AS total_cupos, c.disponible, c.fecha_inicio, c.fecha_final, c.horario,
+                       (c.cupos - COALESCE((SELECT COUNT(*) FROM estudiantes_inscritos e WHERE e.id_curso = c.id), 0)) AS cupos_restantes
+                FROM cursos_disponibles c
+                INNER JOIN estudiantes_inscritos e ON c.id = e.id_curso
+                WHERE e.id_estudiante = :id_estudiante";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['id_estudiante' => $id_estudiante]);
+        $courses = $stmt->fetchAll();
+    } else {
+        // Si no se envía el parámetro, devolver todos los cursos.
+        $sql = "SELECT c.id, c.nombre, c.cupos AS total_cupos, c.disponible, c.fecha_inicio, c.fecha_final, c.horario,
+                       (c.cupos - COALESCE(COUNT(e.id), 0)) AS cupos_restantes
+                FROM cursos_disponibles c
+                LEFT JOIN estudiantes_inscritos e ON c.id = e.id_curso
+                GROUP BY c.id, c.nombre, c.cupos, c.disponible, c.fecha_inicio, c.fecha_final, c.horario";
+        $stmt = $pdo->query($sql);
+        $courses = $stmt->fetchAll();
+    }
+    
+    $response->getBody()->write(json_encode($courses));
     return $response->withHeader('Content-Type', 'application/json');
 });
 
+// Ruta para crear un curso
 $app->post('/cursos', function (Request $request, Response $response) use ($pdo) {
     $data = $request->getParsedBody();
 
     $nombre       = $data['nombre'] ?? 'Curso sin nombre';
-    $cupos        = $data['cupos'] ?? 0;
+    $cupos        = $data['total_cupos'] ?? 0;
     $disponible   = $data['disponible'] ?? true;
     $fecha_inicio = $data['fecha_inicio'] ?? date('Y-m-d');
     $fecha_final  = $data['fecha_final'] ?? date('Y-m-d');
@@ -50,7 +76,6 @@ $app->post('/cursos', function (Request $request, Response $response) use ($pdo)
     $sql = "INSERT INTO cursos_disponibles 
             (nombre, cupos, disponible, fecha_inicio, fecha_final, horario)
             VALUES (:nombre, :cupos, :disponible, :fecha_inicio, :fecha_final, :horario)";
-
     $stmt = $pdo->prepare($sql);
     $stmt->execute(compact('nombre', 'cupos', 'disponible', 'fecha_inicio', 'fecha_final', 'horario'));
 
@@ -58,6 +83,7 @@ $app->post('/cursos', function (Request $request, Response $response) use ($pdo)
     return $response->withStatus(201)->withHeader('Content-Type', 'application/json');
 });
 
+// Ruta para validar inscripción (reenvía a Python)
 $app->post('/validator', function (Request $request, Response $response) use ($pdo) {
     $data = $request->getParsedBody();
 
@@ -84,23 +110,19 @@ $app->post('/validator', function (Request $request, Response $response) use ($p
         CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
         CURLOPT_POSTFIELDS => json_encode($data),
     ]);
-
     $result = curl_exec($ch);
-
     if (curl_errno($ch)) {
         $response->getBody()->write(json_encode(['error' => curl_error($ch)]));
         return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
     }
-
     curl_close($ch);
-
+    
     $response->getBody()->write($result);
     return $response->withHeader('Content-Type', 'application/json');
 });
 
-// Autenticación reenviada a microservicio Node.js
+// Autenticación reenviada a microservicio Node.js (login)
 $app->post('/auth/login', function (Request $request, Response $response, array $args) {
-
     $url = "http://auth-service:3001/auth/login";
 
     $ch = curl_init($url);
@@ -110,21 +132,20 @@ $app->post('/auth/login', function (Request $request, Response $response, array 
         CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
         CURLOPT_POSTFIELDS => json_encode($request->getParsedBody()),
     ]);
-
     $result = curl_exec($ch);
     if (curl_errno($ch)) {
         $response->getBody()->write(json_encode(['error' => curl_error($ch)]));
         return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
     }
-
     curl_close($ch);
-
+    
     $response->getBody()->write($result);
     return $response->withHeader('Content-Type', 'application/json');
 });
 
+// Autenticación reenviada a microservicio Node.js (register)
 $app->post('/auth/register', function (Request $request, Response $response, array $args) {
-    $url = "http://auth-service:3001/auth/register"; // Asegúrate de que esta URL sea la correcta para el registro
+    $url = "http://auth-service:3001/auth/register";
 
     $ch = curl_init($url);
     curl_setopt_array($ch, [
@@ -133,14 +154,13 @@ $app->post('/auth/register', function (Request $request, Response $response, arr
         CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
         CURLOPT_POSTFIELDS => json_encode($request->getParsedBody()),
     ]);
-
     $result = curl_exec($ch);
     if (curl_errno($ch)) {
         $response->getBody()->write(json_encode(['error' => curl_error($ch)]));
         return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
     }
     curl_close($ch);
-
+    
     $response->getBody()->write($result);
     return $response->withHeader('Content-Type', 'application/json');
 });

@@ -1,21 +1,16 @@
 <?php
-require_once __DIR__ . '/../vendor/autoload.php';
-
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
-
-
-$host = $_ENV['DB_HOST'];
-$port = $_ENV['DB_PORT'];
-$dbname = $_ENV['DB_NAME'];
-$user = $_ENV['DB_USER'];
-$pass = $_ENV['DB_PASS'];
+$host = getenv('DB_HOST');
+$port = getenv('DB_PORT');
+$dbname = getenv('DB_NAME');
+$user = getenv('DB_USERNAME');
+$pass = getenv('DB_PASSWORD');
 
 try {
     $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;";
-    $pdo = new PDO($dsn, $user, $pass);
-    // Configurar atributos de conexión según sea necesario
+    $pdo = new PDO($dsn, $user, $pass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    ]);
+    // No se envía salida extra
 } catch (PDOException $e) {
-    exit('Error de conexión: ' . $e->getMessage());
+    exit('Error de conexión PHP: ' . $e->getMessage());
 }
-?>

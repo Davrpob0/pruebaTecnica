@@ -6,16 +6,10 @@ import { sessionMiddleware } from './config/redis';
 import router from './routes';
 import { AppDataSource } from "./config/data-source";
 
-
 dotenv.config();
 
 const app = express();
 
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-}));
 
 app.use(bodyParser.json());
 app.use('/auth', sessionMiddleware, router);
@@ -25,7 +19,16 @@ const PORT = process.env.PORT || 3001;
 async function startApp() {
     try {
         await AppDataSource.initialize();
+
+        console.log("Configuración actual para conexión DB:", {
+            host: process.env.DB_HOST,
+            port: process.env.DB_PORT,
+            username: process.env.DB_USERNAME,
+            database: process.env.DB_NAME
+        });
+
         console.log('Base de datos conectada correctamente.');
+
 
         app.listen(PORT, () => {
             console.log(`Servidor de autenticación corriendo en el puerto ${PORT}`);

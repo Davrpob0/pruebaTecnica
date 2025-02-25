@@ -3,6 +3,7 @@
     {{ isRegistering ? "Registrar Usuario" : "Iniciar Sesión" }}
   </h2>
 
+  <!-- Formulario de Login -->
   <form *ngIf="!isRegistering" (ngSubmit)="login()">
     <div class="form-group">
       <label for="username">Usuario:</label>
@@ -37,6 +38,7 @@
     </button>
   </form>
 
+  <!-- Formulario de Registro -->
   <form *ngIf="isRegistering" (ngSubmit)="register()">
     <div class="form-group">
       <label for="reg-username">Usuario:</label>
@@ -69,10 +71,10 @@
       />
     </div>
     <div class="form-group">
-      <label for="reg-email">Rol:</label>
+      <label for="reg-rol">Rol:</label>
       <input
         id="reg-rol"
-        type="rol"
+        type="text"
         [(ngModel)]="registerData.role"
         name="reg-rol"
         required
@@ -91,11 +93,16 @@
     </button>
   </form>
 
-  <div class="login-response" *ngIf="loginResponse">
-    <p
-      [ngClass]="{ success: !loginResponse.error, error: loginResponse.error }"
-    >
-      {{ loginResponse.message || loginResponse.error }}
-    </p>
+  <!-- Mensajes de respuesta o error -->
+  <div class="login-response" *ngIf="errorMessage">
+    <p class="error-message">{{ errorMessage }}</p>
+  </div>
+
+  <div class="login-response" *ngIf="!isRegistering && loginResponse">
+    <p class="response-message">{{ loginResponse.message }}</p>
+  </div>
+
+  <div class="login-response" *ngIf="isRegistering && registerResponse">
+    <p class="response-message">{{ registerResponse.message }}</p>
   </div>
 </div>

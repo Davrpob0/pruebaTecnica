@@ -6,6 +6,8 @@ export const register = async (req: Request, res: Response) => {
   try {
     const { username, password, email, role } = req.body;
 
+    console.log("Variables recibidas:", { username, password, email, role });
+
     if (!username || !password || !email) {
       return res.status(400).json({ message: "Todos los campos son obligatorios" });
     }
@@ -13,7 +15,8 @@ export const register = async (req: Request, res: Response) => {
     const user = await AuthService.register(username, password, email, role);
     return res.status(201).json({ message: "Usuario registrado exitosamente", user });
   } catch (error: any) {
-    return res.status(400).json({ message: error.message });
+    console.error("Error capturado en controlador:", error);
+    return res.status(500).json({ message: error.message });
   }
 };
 

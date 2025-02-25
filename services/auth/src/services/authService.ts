@@ -5,39 +5,36 @@ import { User } from "../entity/User";
 import { redisClient } from "../config/redis";
 
 class AuthService {
-  async register(username: string, password: string, email: string, role: string = "user") {
+  async register(username: string, password: string, email: string, role: string = "student") {
     const userRepository = AppDataSource.getRepository(User);
 
-    // Obtener máximo id usando el nombre correcto del campo
-    const maxIdResult = await userRepository
-      .createQueryBuilder("user")
-      .select("COALESCE(MAX(user.usuario_id), 0)", "max")
-      .getRawOne();
+    try {
+      const userExists = await userRepository.findOne({
+        where: [{ username }, { email }],
+      });
 
-    const newId = maxIdResult.max + 1;
+      if (userExists) {
+        throw new Error("El usuario o correo ya existe");
+      }
 
-    const userExists = await userRepository.findOne({
-      where: [{ username }, { email }],
-    });
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-    if (userExists) {
-      throw new Error("El usuario o correo ya existe");
+      const user = userRepository.create({
+        username,
+        password: hashedPassword,
+        email,
+        role,
+      });
+
+      await userRepository.save(user);
+
+      return user;
+    } catch (error) {
+      console.error("Error capturado en servicio AuthService:", error);
+      throw error;
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = userRepository.create({
-      id: newId, // Asegúrate que tu entidad usa usuario_id como @PrimaryGeneratedColumn
-      username,
-      password: hashedPassword,
-      email,
-      role,
-    });
-
-    await userRepository.save(user);
-
-    return user;
   }
+
 
 
   async login(username: string, password: string) {

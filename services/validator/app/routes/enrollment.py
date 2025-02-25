@@ -33,6 +33,7 @@ def schedules_overlap(day1, start1, end1, day2, start2, end2):
 @router.post("/validate")
 def validate_enrollment(request: EnrollmentRequest):
     conn = get_db_connection()
+    print("Database connection established")
     cur = conn.cursor()
 
     # 1. Verificar que el estudiante no esté ya inscrito en el mismo curso.

@@ -3,11 +3,11 @@
   <nav class="navbar">
     <h1>Portal Universitario</h1>
     <div class="user-info">
-      <span>{{ userData.username }}</span>
+      <span class="username">{{ userData.username }}</span>
       <span class="role">{{ userRole | uppercase }}</span>
-      <nav class="header-nav">
-        <button class="btn" (click)="logout()">Logout</button>
-      </nav>
+      <div class="logout-wrapper">
+        <button class="btn logout-btn" (click)="logout()">Logout</button>
+      </div>
     </div>
   </nav>
   <div class="main-content">
