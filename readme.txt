@@ -1,48 +1,88 @@
 # Prueba Técnica
 
-Este proyecto incluye servicios en PHP, Node.js, Python y una aplicación web en Angular. A continuación se detalla cómo inicializar la descripción del proyecto, configurar las variables de entorno y levantar el proyecto.
+Este proyecto integra diversos microservicios y una aplicación web, cada uno desarrollado con tecnologías específicas:
 
-## Descripción
+- **API REST en PHP:**  
+  Ubicada en [networking/apiRestPHP](networking/apiRestPHP), utiliza PHP 8.1 con Apache y PostgreSQL para gestionar cursos y usuarios.
+  
+- **Servicio de Autenticación (Node.js):**  
+  Ubicado en [services/auth](services/auth), se encarga del login y registro de usuarios, aprovechando Redis para sesión y almacenamiento.
+  
+- **Validador (Python):**  
+  Ubicado en [services/validator](services/validator), se encarga de validar inscripciones utilizando Python y Uvicorn.
+  
+- **Aplicación Web Angular (CalendarWeb):**  
+  Ubicada en [webapps/calendarWeb](webapps/calendarWeb), se construye con Angular y se expone mediante Nginx.
 
-El proyecto consta de los siguientes componentes:
+---
 
-- **API REST en PHP:** ubicada en [networking/apiRestPHP](networking/apiRestPHP). Este servicio utiliza una base de datos PostgreSQL para gestionar cursos y usuarios.
-- **Servicio de Autenticación (Node.js):** ubicado en [services/auth](services/auth). Se encarga del login y registro de usuarios, utilizando Redis para el almacenamiento de sesiones.
-- **Validador (Python):** Está configurado para validar inscripciones.
-- **Aplicación Web Angular (CalendarWeb):** ubicada en [webapps/calendarWeb](webapps/calendarWeb), expuesta con Nginx en producción y gestionada con Angular CLI en desarrollo.
+## Tecnologías Requeridas
 
-## Variables de Entorno
+Para levantar el proyecto con Docker Compose, asegúrate de tener instaladas las siguientes tecnologías en tu ordenador:
 
-Para inicializar el proyecto, se deben configurar los siguientes valores:
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
 
-- **Variables para la Base de Datos (PostgreSQL):**
-  - `DB_HOST`
-  - `DB_PORT`
-  - `DB_NAME`
-  - `DB_USER` (o `DB_USERNAME`)
-  - `DB_PASS` (o `DB_PASSWORD`)
+Además, si deseas editar o ejecutar algunos de los microservicios localmente, deberás contar opcionalmente con:
 
-- **Variables para Redis & Sesiones (Servicio de Autenticación):**
-  - `REDIS_URL`
-  - `REDIS_PASSWORD`
-  - `SESSION_SECRET`
+- **Node.js y npm** para la aplicación Angular y el servicio de autenticación.
+- **PHP** para modificar y correr localmente la API REST.
+- **Python** (y pip) para el servicio de validación.
 
-- **Variables adicionales para el Servicio de Autenticación:**
-  - `JWT_SECRET`
-  - `JWT_EXPIRATION`
-  - `PORT` (puerto del servicio, por defecto 3001)
+---
 
-> Copia el contenido de [`.env.example`](.env.example) a [`.env`](.env) y ajusta los valores según tu entorno local.
+## Configuración de Variables de Entorno
 
-## Inicialización del Proyecto
-
-1. **Configura las variables de entorno:**  
-   Copia el contenido del archivo [`.env.example`](.env.example) a [`.env`](.env) y edita los valores según tu configuración local.
-
-2. **Levanta la base de datos (opcional):**  
-   Si fuera necesario, inicializa la base de datos ejecutando el script en [db/init.sql](db/init.sql).
-
-3. **Construye y levanta todos los servicios:**  
-   Ejecuta el siguiente comando en la raíz del proyecto:
+1. Copia el contenido de [`.env.example`](.env.example) a [`.env`](.env):
    ```sh
-   docker-compose up --build
+   cp .env.example .env
+
+
+
+Cómo Levantar el Proyecto con Docker Compose
+Sigue estos pasos para construir y levantar todo el entorno:
+
+Abre una terminal en la raíz del proyecto
+Navega al directorio raíz donde se encuentra el archivo docker-compose.yml.
+
+Construir y levantar los contenedores
+Ejecuta el siguiente comando: docker-compose up --build
+
+Este comando: 
+
+Construirá las imágenes de Docker si es necesario.
+Levantará los contenedores definidos en docker-compose.yml, que incluyen:
+db: Contenedor de PostgreSQL.
+redis: Contenedor de Redis.
+php-api: API REST en PHP.
+auth-service: Servicio de autenticación en Node.js.
+validator: Servicio de validación en Python.
+frontend: Aplicación Angular servida por Nginx.
+Verifica que todos los contenedores estén en ejecución
+Utiliza el comando: docker-compose ps
+
+para confirmar que cada servicio se ha iniciado correctamente.
+
+Accede a los distintos servicios:
+
+API REST en PHP: http://localhost:8080
+Servicio de Autenticación: http://localhost:3001
+Validador: http://localhost:3000
+Aplicación Angular: http://localhost:4200
+Registro de Usuarios:
+
+El registro de usuarios (tanto estudiantes como administradores) se realiza a través del microservicio de autenticación.
+Las contraseñas se almacenan cifradas, por lo que no es necesario insertar usuarios manualmente desde el script de inicialización.
+Notas Adicionales
+Edición y Desarrollo Local:
+Si deseas modificar la aplicación Angular, el servicio de autenticación, la API REST o el validador fuera de Docker, asegúrate de tener instaladas las tecnologías opcionales mencionadas (Node.js, PHP y Python).
+
+Logs y Resolución de Problemas:
+En caso de errores (por ejemplo, problemas de conexión o CORS), consulta los logs de cada contenedor con:
+
+o revisa los archivos de log específicos de cada servicio.
+
+Actualización de Variables de Entorno:
+Mantén la consistencia entre el archivo .env y .env.example para evitar conflictos de configuración.
+
+Con estos pasos y requerimientos, deberías poder levantar y utilizar el proyecto de manera exitosa en tu entorno local.
