@@ -4,7 +4,8 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 export interface Course {
-  id?: number;
+  id_curso?: string;
+  id_clase?: string;
   nombre: string;
   total_cupos: number;
   disponible: boolean;
@@ -16,11 +17,13 @@ export interface Course {
 }
 
 export interface Enrollment {
-  id_curso: number;
+  id_curso: string;      // Identificador del curso (varchar(5))
+  id_clase: string;      // Identificador de la clase (varchar(5))
   nombre_estudiante: string;
   id_estudiante: number;
   cupos_totales: number;
 }
+
 
 
 
@@ -55,7 +58,21 @@ export class CoursesService {
   // Obtiene la lista de cursos
   getCourses(): Observable<Course[]> {
     return this.http.get(`${this.baseUrl}/cursos`, { responseType: 'text' }).pipe(
-      map(responseText => this.extractJson<Course[]>(responseText))
+      map(responseText => {
+        const courses: any[] = this.extractJson<any[]>(responseText);
+        return courses.map(course => ({
+          id_curso: course.course_id, // Mapear course_id a id_curso
+          id_clase: course.class_id,   // Mapear class_id a id_clase
+          nombre: course.nombre,
+          total_cupos: course.total_cupos,
+          disponible: course.disponible,
+          fecha_inicio: course.fecha_inicio,
+          fecha_final: course.fecha_final,
+          horario: course.horario,
+          profesor: course.profesor,
+          cupos_restantes: course.cupos_restantes
+        }));
+      })
     );
   }
 

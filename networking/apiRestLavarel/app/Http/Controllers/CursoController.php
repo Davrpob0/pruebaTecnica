@@ -16,7 +16,7 @@ class CursoController extends Controller
         if ($idEstudiante) {
             error_log("Consultando cursos para el estudiante con id: " . $idEstudiante);
             $courses = DB::select(
-                "SELECT cl.id_clase AS id, cu.nombre, cl.profesor, 
+                "SELECT cu.id AS course_id, cl.id_clase AS class_id, cu.nombre, cl.profesor, 
                         cl.cupos AS total_cupos, cl.fecha_inicio, cl.fecha_final, cl.horario,
                         (cl.cupos - COALESCE(
                             (SELECT COUNT(*) FROM estudiantes_inscritos e WHERE e.id_clase = cl.id_clase), 0)
@@ -31,13 +31,13 @@ class CursoController extends Controller
         } else {
             error_log("Consultando todos los cursos.");
             $courses = DB::select(
-                "SELECT cl.id_clase AS id, cu.nombre, cl.profesor, 
+                "SELECT cu.id AS course_id, cl.id_clase AS class_id, cu.nombre, cl.profesor, 
                         cl.cupos AS total_cupos, cl.fecha_inicio, cl.fecha_final, cl.horario,
                         (cl.cupos - COALESCE(COUNT(e.id_estudiante), 0)) AS cupos_restantes
                  FROM clases_disponibles cl
                  INNER JOIN cursos_disponibles cu ON cl.id_curso = cu.id
                  LEFT JOIN estudiantes_inscritos e ON cl.id_clase = e.id_clase
-                 GROUP BY cl.id_clase, cu.nombre, cl.profesor, cl.cupos, cl.fecha_inicio, cl.fecha_final, cl.horario"
+                 GROUP BY cu.id, cl.id_clase, cu.nombre, cl.profesor, cl.cupos, cl.fecha_inicio, cl.fecha_final, cl.horario"
             );
             error_log("Consulta ejecutada. Número de cursos obtenidos: " . count($courses));
         }

@@ -25,7 +25,8 @@ export class AddCourseComponent implements OnInit {
 
   // Datos para la inscripción; nombre_estudiante e id_estudiante se obtienen de sessionStorage
   enrollment: Enrollment = {
-    id_curso: 0,
+    id_curso: '',
+    id_clase: '',
     nombre_estudiante: '',
     id_estudiante: 0,
     cupos_totales: 0
@@ -73,10 +74,15 @@ export class AddCourseComponent implements OnInit {
 
   // Paso 2: Realizar la inscripción para la clase seleccionada
   enroll(selectedClass: Course): void {
-    // Se asignan los datos del curso/clase seleccionado a la inscripción.
-    this.enrollment.id_curso = selectedClass.id!; // Se asume que 'id' representa el identificador de la clase (o id_clase)
-    this.enrollment.cupos_totales = selectedClass.total_cupos; // O el campo correspondiente
-    this.coursesService.enrollStudent(this.enrollment).subscribe({
+    const enrollmentData: Enrollment = {
+      id_curso: selectedClass.id_curso!,      // ID del curso
+      id_clase: selectedClass.id_clase!,        // ID de la clase (corregido)
+      nombre_estudiante: this.enrollment.nombre_estudiante,
+      id_estudiante: this.enrollment.id_estudiante,
+      cupos_totales: selectedClass.total_cupos  // Cupos totales de la clase
+    };
+
+    this.coursesService.enrollStudent(enrollmentData).subscribe({
       next: (res) => {
         this.enrollmentResponse = res;
         Swal.fire({

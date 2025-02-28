@@ -33,14 +33,14 @@ def validate_enrollment(request: EnrollmentRequest):
     # 1. Verificar que el estudiante no esté ya inscrito en este horario (usando id_clase)
     cur.execute(
         "SELECT COUNT(*) AS count FROM estudiantes_inscritos WHERE id_clase = %s AND id_estudiante = %s",
-        (request.id_curso, request.id_estudiante)  # request.id_curso representa el id_clase en este contexto
+        (request.id_clase, request.id_estudiante)  # Usamos id_clase del payload
     )
     existing = cur.fetchone()
     if existing["count"] > 0:
         conn.close()
         return {"valid": False, "message": "El estudiante ya está inscrito en este curso."}
 
-    # 2. Obtener la información completa del curso actual usando el id_clase
+    # 2. Obtener la información completa de la clase actual usando el id_clase
     cur.execute(
         """
         SELECT cl.id_clase, cl.cupos, cl.horario, cl.fecha_inicio, cl.fecha_final, cu.nombre
@@ -48,7 +48,7 @@ def validate_enrollment(request: EnrollmentRequest):
         JOIN clases_disponibles cl ON cu.id = cl.id_curso
         WHERE cl.id_clase = %s
         """,
-        (request.id_curso,)
+        (request.id_clase,)
     )
     course = cur.fetchone()
     if not course or not course.get("horario"):
@@ -76,7 +76,7 @@ def validate_enrollment(request: EnrollmentRequest):
     
     current_course_name = course["nombre"]
 
-    # 3. Validar que el estudiante no esté inscrito en otro curso con el mismo nombre
+    # 3. Validar que el estudiante no esté inscrito en otro curso con el mismo nombre.
     query = """
     SELECT cu.nombre
     FROM estudiantes_inscritos e
@@ -90,7 +90,7 @@ def validate_enrollment(request: EnrollmentRequest):
         conn.close()
         return {"valid": False, "message": "El estudiante ya está inscrito en otro curso con el mismo nombre."}
 
-    # 4. Validar cupos: contar inscripciones en el horario (id_clase)
+    # 4. Validar cupos: contar inscripciones en la clase (id_clase) actual.
     cur.execute("SELECT COUNT(*) AS count FROM estudiantes_inscritos WHERE id_clase = %s", (course["id_clase"],))
     result = cur.fetchone()
     current_count = result["count"]
@@ -116,7 +116,6 @@ def validate_enrollment(request: EnrollmentRequest):
 
     conn.close()
     enrollment_id = f"{returned['id_clase']}-{returned['id_estudiante']}"
-
     return {
         "valid": True,
         "message": "Inscripción registrada exitosamente.",
