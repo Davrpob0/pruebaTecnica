@@ -23,18 +23,23 @@ services:
     ports:
       - "6379:6379"
 
-  php-api:
+  laravel-api:
     build:
-      context: ./networking/apiRestPHP
+      context: ./networking/apiRestLavarel
       dockerfile: Dockerfile
     ports:
       - "8080:80"
     environment:
+      DB_CONNECTION: ${DB_CONNECTION}
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      APP_URL: ${APP_URL}
+      APP_DEBUG: ${APP_DEBUG}
+      APP_ENV: ${APP_ENV}
+      APP_NAME: ${APP_NAME}
     depends_on:
       - db
 
@@ -80,9 +85,20 @@ services:
     ports:
       - "4200:80"
     depends_on:
-      - php-api
+      - laravel-api
       - auth-service
       - validator
+
+  init-admin:
+    image: curlimages/curl:7.85.0
+    depends_on:
+      - laravel-api
+    entrypoint:
+      [
+        "/bin/sh",
+        "-c",
+        'sleep 20 && curl -X POST http://laravel-api/auth/register -H ''Content-Type: application/json'' -d ''{"username": "admin", "password": "admin", "email": "admin@admin.com", "role": "admin"}''',
+      ]
 
 volumes:
   db_data:

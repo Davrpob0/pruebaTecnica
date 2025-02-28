@@ -6,11 +6,6 @@ import datetime
 router = APIRouter()
 
 def parse_schedule(horario: str):
-    """
-    Recibe un horario en el formato "Martes 09:00 - 12:00"
-    y retorna (día, hora_inicio, hora_fin) como objetos:
-    ("Martes", time(9,0), time(12,0))
-    """
     parts = horario.split()
     if len(parts) < 4:
         return None, None, None
@@ -27,7 +22,6 @@ def parse_schedule(horario: str):
 def schedules_overlap(day1, start1, end1, day2, start2, end2):
     if day1 != day2:
         return False
-    # Los intervalos se superponen si: inicio1 < fin2 y inicio2 < fin1.
     return start1 < end2 and start2 < end1
 
 @router.post("/validate")
@@ -36,19 +30,24 @@ def validate_enrollment(request: EnrollmentRequest):
     print("Database connection established")
     cur = conn.cursor()
 
-    # 1. Verificar que el estudiante no esté ya inscrito en el mismo curso.
+    # 1. Verificar que el estudiante no esté ya inscrito en este horario (usando id_clase)
     cur.execute(
-        "SELECT COUNT(*) AS count FROM estudiantes_inscritos WHERE id_curso = %s AND id_estudiante = %s",
-        (request.id_curso, request.id_estudiante)
+        "SELECT COUNT(*) AS count FROM estudiantes_inscritos WHERE id_clase = %s AND id_estudiante = %s",
+        (request.id_curso, request.id_estudiante)  # request.id_curso representa el id_clase en este contexto
     )
     existing = cur.fetchone()
     if existing["count"] > 0:
         conn.close()
         return {"valid": False, "message": "El estudiante ya está inscrito en este curso."}
 
-    # 2. Obtener el total de cupos, el horario y las fechas del curso actual.
+    # 2. Obtener la información completa del curso actual usando el id_clase
     cur.execute(
-        "SELECT cupos, horario, fecha_inicio, fecha_final FROM cursos_disponibles WHERE id = %s",
+        """
+        SELECT cl.id_clase, cl.cupos, cl.horario, cl.fecha_inicio, cl.fecha_final, cu.nombre
+        FROM cursos_disponibles cu
+        JOIN clases_disponibles cl ON cu.id = cl.id_curso
+        WHERE cl.id_clase = %s
+        """,
         (request.id_curso,)
     )
     course = cur.fetchone()
@@ -57,20 +56,16 @@ def validate_enrollment(request: EnrollmentRequest):
         return {"valid": False, "message": "No se encontró el horario o las fechas del curso actual."}
     
     total_cupos = course["cupos"]
-
-    # Parsear el horario para validar solapamientos de tiempo
     current_day, current_start, current_end = parse_schedule(course["horario"])
     if current_day is None:
         conn.close()
         return {"valid": False, "message": "Formato de horario inválido en el curso actual."}
     
-    # 3. Procesar las fechas del curso actual.
     try:
         if isinstance(course["fecha_inicio"], str):
             current_start_date = datetime.datetime.strptime(course["fecha_inicio"], "%Y-%m-%d").date()
         else:
             current_start_date = course["fecha_inicio"]
-
         if isinstance(course["fecha_final"], str):
             current_end_date = datetime.datetime.strptime(course["fecha_final"], "%Y-%m-%d").date()
         else:
@@ -78,62 +73,52 @@ def validate_enrollment(request: EnrollmentRequest):
     except Exception as e:
         conn.close()
         return {"valid": False, "message": f"Error al procesar las fechas del curso actual: {str(e)}"}
+    
+    current_course_name = course["nombre"]
 
-    # 4. Validar que el estudiante no esté inscrito en otro curso con horario o fechas conflictivas.
+    # 3. Validar que el estudiante no esté inscrito en otro curso con el mismo nombre
     query = """
-    SELECT c.horario, c.fecha_inicio, c.fecha_final FROM estudiantes_inscritos e
-    JOIN cursos_disponibles c ON e.id_curso = c.id
-    WHERE e.id_estudiante = %s AND e.id_curso != %s
+    SELECT cu.nombre
+    FROM estudiantes_inscritos e
+    JOIN clases_disponibles cl ON e.id_clase = cl.id_clase
+    JOIN cursos_disponibles cu ON cl.id_curso = cu.id
+    WHERE e.id_estudiante = %s AND cu.nombre = %s
     """
-    cur.execute(query, (request.id_estudiante, request.id_curso))
-    other_courses = cur.fetchall()
-    for enrolled in other_courses:
-        # Validación de horario (solapamiento en el mismo día)
-        other_horario = enrolled.get("horario")
-        if other_horario:
-            other_day, other_start, other_end = parse_schedule(other_horario)
-            if other_day and schedules_overlap(current_day, current_start, current_end, other_day, other_start, other_end):
-                conn.close()
-                return {"valid": False, "message": "El estudiante ya está inscrito en otro curso con horario conflictivo."}
-        
-        # Validación de fechas (solapamiento de intervalos de fechas)
-        try:
-            other_start_date = datetime.datetime.strptime(enrolled["fecha_inicio"], "%Y-%m-%d").date()
-            other_end_date   = datetime.datetime.strptime(enrolled["fecha_final"], "%Y-%m-%d").date()
-        except Exception:
-            continue
-        if current_start_date < other_end_date and other_start_date < current_end_date:
-            conn.close()
-            return {"valid": False, "message": "El estudiante ya está inscrito en otro curso con fechas conflictivas."}
+    cur.execute(query, (request.id_estudiante, current_course_name))
+    duplicate = cur.fetchone()
+    if duplicate:
+        conn.close()
+        return {"valid": False, "message": "El estudiante ya está inscrito en otro curso con el mismo nombre."}
 
-    # 5. Validar cupos: contar inscripciones en el curso actual.
-    cur.execute("SELECT COUNT(*) AS count FROM estudiantes_inscritos WHERE id_curso = %s", (request.id_curso,))
+    # 4. Validar cupos: contar inscripciones en el horario (id_clase)
+    cur.execute("SELECT COUNT(*) AS count FROM estudiantes_inscritos WHERE id_clase = %s", (course["id_clase"],))
     result = cur.fetchone()
     current_count = result["count"]
     if current_count >= total_cupos:
         conn.close()
         return {"valid": False, "message": "Cupo máximo alcanzado para este curso."}
 
-    # Calcular el nuevo cupo (incremental) para esta inscripción.
     new_cupo = current_count + 1
 
-    # 6. Insertar la inscripción utilizando el nuevo cupo calculado.
+    # 5. Insertar la inscripción utilizando el nuevo cupo, registrando el id_clase.
     insert_sql = """
-    INSERT INTO estudiantes_inscritos (id_curso, nombre_estudiante, id_estudiante, cupo)
-    VALUES (%s, %s, %s, %s) RETURNING id;
+        INSERT INTO estudiantes_inscritos (id_clase, nombre_estudiante, id_estudiante, cupo)
+        VALUES (%s, %s, %s, %s) RETURNING id_clase, id_estudiante;
     """
     try:
-        cur.execute(insert_sql, (request.id_curso, request.nombre_estudiante, request.id_estudiante, new_cupo))
-        new_id = cur.fetchone()["id"]
+        cur.execute(insert_sql, (course["id_clase"], request.nombre_estudiante, request.id_estudiante, new_cupo))
+        returned = cur.fetchone()
         conn.commit()
     except Exception as e:
         conn.rollback()
         conn.close()
         raise HTTPException(status_code=500, detail=f"Error al registrar la inscripción: {str(e)}")
-    
+
     conn.close()
+    enrollment_id = f"{returned['id_clase']}-{returned['id_estudiante']}"
+
     return {
         "valid": True,
         "message": "Inscripción registrada exitosamente.",
-        "enrollment_id": new_id
+        "enrollment_id": enrollment_id
     }

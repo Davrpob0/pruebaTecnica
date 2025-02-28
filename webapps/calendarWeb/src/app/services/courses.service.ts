@@ -11,6 +11,7 @@ export interface Course {
   fecha_inicio: string;
   fecha_final: string;
   horario: string;
+  profesor: string;
   cupos_restantes?: number; // campo calculado
 }
 
@@ -20,6 +21,10 @@ export interface Enrollment {
   id_estudiante: number;
   cupos_totales: number;
 }
+
+
+
+
 
 @Injectable({
   providedIn: 'root'
@@ -56,6 +61,7 @@ export class CoursesService {
 
   // Crea un nuevo curso
   addCourse(course: Course): Observable<Course> {
+
     return this.http.post(`${this.baseUrl}/cursos`, course, { responseType: 'text' }).pipe(
       map(responseText => this.extractJson<Course>(responseText))
     );
@@ -63,13 +69,14 @@ export class CoursesService {
 
   // Envía la inscripción para validarla
   enrollStudent(enrollment: Enrollment): Observable<any> {
+
     return this.http.post(`${this.baseUrl}/validator`, enrollment, { responseType: 'text' }).pipe(
       map(responseText => this.extractJson<any>(responseText))
     );
   }
 
   getMyCourses(studentId: number): Observable<Course[]> {
-    // Cambiar '/courses/my-courses' por la ruta definida en el backend, p.ej., '/cursos'
+
     return this.http.get<Course[]>(`${this.baseUrl}/cursos?id_estudiante=${studentId}`);
   }
 

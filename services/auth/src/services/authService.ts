@@ -100,6 +100,7 @@ class AuthService {
   }
 
   async verifyToken(token: string): Promise<any> {
+    console.log("Verificando token");
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
       const sessionKey = `session:${decoded.id}`;

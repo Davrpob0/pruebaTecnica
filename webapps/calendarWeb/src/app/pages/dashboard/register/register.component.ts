@@ -16,7 +16,7 @@ export class RegisterComponent implements OnInit {
   // Array de días disponibles
   daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-  // Objeto para el formulario con campos separados para día y horas
+  // Objeto para el formulario con campos separados para día, horas y profesor
   newCourse: any = {
     nombre: '',
     total_cupos: 15,
@@ -25,7 +25,8 @@ export class RegisterComponent implements OnInit {
     fecha_final: '',
     dayOfWeek: 'Lunes',  // valor por defecto
     startTime: '',
-    endTime: ''
+    endTime: '',
+    profesor: ''  // Nuevo campo para profesor
   };
 
   constructor(private coursesService: CoursesService) { }
@@ -56,8 +57,12 @@ export class RegisterComponent implements OnInit {
       Swal.fire('Atención', 'Debes seleccionar la hora de inicio y de fin', 'warning');
       return;
     }
+    if (!this.newCourse.profesor.trim()) {
+      Swal.fire('Atención', 'Debes ingresar el nombre del profesor', 'warning');
+      return;
+    }
 
-    // Construir la cadena "horario" a partir de los tres campos
+    // Construir la cadena "horario" usando template literals correctamente
     const horario = `${this.newCourse.dayOfWeek} ${this.newCourse.startTime} - ${this.newCourse.endTime}`;
 
     // Preparar el objeto que se enviará al backend
@@ -67,7 +72,8 @@ export class RegisterComponent implements OnInit {
       disponible: this.newCourse.disponible,
       fecha_inicio: this.newCourse.fecha_inicio,
       fecha_final: this.newCourse.fecha_final,
-      horario: horario
+      horario: horario,
+      profesor: this.newCourse.profesor
     };
 
     // Llamar al servicio para crear el curso
@@ -99,7 +105,8 @@ export class RegisterComponent implements OnInit {
       fecha_final: '',
       dayOfWeek: 'Lunes',
       startTime: '',
-      endTime: ''
+      endTime: '',
+      profesor: ''
     };
   }
 }

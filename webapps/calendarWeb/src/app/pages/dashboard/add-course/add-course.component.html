@@ -1,42 +1,48 @@
-<h2 class="title">Cursos Disponibles</h2>
-
-<div class="courses-container">
-  <div
-    class="course-card"
-    *ngFor="let course of courses"
-    (click)="onSelectCourse(course)"
-    [class.selected]="selectedCourse?.id === course.id"
-  >
-    <h3>{{ course.nombre }}</h3>
-    <p><strong>Horario:</strong> {{ course.horario }}</p>
-    <p><strong>Fecha Inicio:</strong> {{ course.fecha_inicio }}</p>
-    <p><strong>Fecha Final:</strong> {{ course.fecha_final }}</p>
-    <p><strong>Cupos disponibles:</strong> {{ course.cupos_restantes }}</p>
-    <button class="select-button" *ngIf="selectedCourse?.id !== course.id">
-      Seleccionar
-    </button>
+<div class="add-course-container">
+  <!-- Paso 1: Seleccionar curso (por nombre único) -->
+  <div *ngIf="currentStep === 1">
+    <h2 class="title">Seleccione un Curso</h2>
+    <div class="form-group">
+      <label for="courseSelect">Curso:</label>
+      <select
+        id="courseSelect"
+        [(ngModel)]="selectedCourseName"
+        name="courseSelect"
+        required
+      >
+        <option value="" disabled selected>Seleccione un curso</option>
+        <option *ngFor="let name of uniqueCourseNames" [value]="name">
+          {{ name }}
+        </option>
+      </select>
+    </div>
+    <button class="btn-next" (click)="nextStep()">Siguiente</button>
   </div>
-</div>
 
-<div class="registration-form" *ngIf="selectedCourse">
-  <h3>Registrar inscripción en: {{ selectedCourse.nombre }}</h3>
-  <p>
-    El estudiante <strong>{{ enrollment.nombre_estudiante }}</strong>
-    se inscribirá en este curso.
-  </p>
-  <button type="button" class="btn-register" (click)="enroll()">
-    Registrar
-  </button>
-</div>
+  <!-- Paso 2: Mostrar clases disponibles para el curso seleccionado -->
+  <div *ngIf="currentStep === 2">
+    <h2 class="title">Clases Disponibles para: "{{ selectedCourseName }}"</h2>
+    <div class="courses-container">
+      <div class="course-card" *ngFor="let clase of filteredClasses">
+        <h3>{{ clase.horario }}</h3>
+        <p><strong>Fecha Inicio:</strong> {{ clase.fecha_inicio }}</p>
+        <p><strong>Fecha Final:</strong> {{ clase.fecha_final }}</p>
+        <p><strong>Profesor:</strong> {{ clase.profesor }}</p>
+        <button class="btn-enroll" (click)="enroll(clase)">Inscribirse</button>
+      </div>
+    </div>
+    <button class="btn-back" (click)="goBack()">Volver</button>
+  </div>
 
-<div class="server-response" *ngIf="enrollmentResponse">
-  <p
-    [ngClass]="{
-      success: enrollmentResponse.valid,
-      error: !enrollmentResponse.valid,
-      'fade-out': fadeResponse
-    }"
-  >
-    {{ enrollmentResponse.message }}
-  </p>
+  <div class="server-response" *ngIf="enrollmentResponse">
+    <p
+      [ngClass]="{
+        success: enrollmentResponse.valid,
+        error: !enrollmentResponse.valid,
+        'fade-out': fadeResponse
+      }"
+    >
+      {{ enrollmentResponse.message }}
+    </p>
+  </div>
 </div>

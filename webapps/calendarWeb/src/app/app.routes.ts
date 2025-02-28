@@ -6,6 +6,7 @@ import { HomeComponent } from './pages/dashboard/home/home.component';
 import { SemesterComponent } from './pages/dashboard/semester/semester.component';
 import { AddCourseComponent } from './pages/dashboard/add-course/add-course.component';
 import { RegisterComponent } from './pages/dashboard/register/register.component';
+import { RegisterUComponent } from './pages/dashboard/register-u/register-u.component';
 import { ProfileComponent } from './pages/dashboard/profile/profile.component';
 import { AuthGuard } from './guards/auth.guard';
 
@@ -22,6 +23,7 @@ export const appRoutes: Routes = [
             { path: 'semester', component: SemesterComponent },
             { path: 'add-course', component: AddCourseComponent },
             { path: 'register', component: RegisterComponent },
+            { path: 'register-u', component: RegisterUComponent },
             { path: 'profile', component: ProfileComponent },
             { path: '', redirectTo: 'home', pathMatch: 'full' }
         ]

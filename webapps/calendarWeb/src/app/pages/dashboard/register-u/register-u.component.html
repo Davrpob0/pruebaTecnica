@@ -1,0 +1,60 @@
+<div class="register-container">
+  <h2 class="title">Registrar Usuario</h2>
+  <form (ngSubmit)="register()">
+    <div class="form-group">
+      <label for="reg-username">Usuario:</label>
+      <input
+        id="reg-username"
+        type="text"
+        [(ngModel)]="registerData.username"
+        name="reg-username"
+        required
+      />
+    </div>
+    <div class="form-group">
+      <label for="reg-password">Contraseña:</label>
+      <input
+        id="reg-password"
+        type="password"
+        [(ngModel)]="registerData.password"
+        name="reg-password"
+        required
+      />
+    </div>
+    <div class="form-group">
+      <label for="reg-email">Email:</label>
+      <input
+        id="reg-email"
+        type="email"
+        [(ngModel)]="registerData.email"
+        name="reg-email"
+        required
+      />
+    </div>
+    <div class="form-group">
+      <label for="reg-rol">Rol:</label>
+      <select
+        id="reg-rol"
+        [(ngModel)]="registerData.role"
+        name="reg-rol"
+        required
+      >
+        <option value="" disabled selected>Seleccione un rol</option>
+        <option value="admin">Administrador</option>
+        <option value="student">Estudiante</option>
+        <!-- Puedes agregar más opciones según necesites -->
+      </select>
+    </div>
+    <button type="submit" class="btn-registerU" [disabled]="loading">
+      {{ loading ? "Cargando..." : "Registrar" }}
+    </button>
+  </form>
+
+  <div class="register-response" *ngIf="errorMessage">
+    <p class="error-message">{{ errorMessage }}</p>
+  </div>
+
+  <div class="register-response" *ngIf="registerResponse">
+    <p class="success-message">{{ registerResponse.message }}</p>
+  </div>
+</div>

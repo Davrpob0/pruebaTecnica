@@ -47,6 +47,18 @@
       />
     </div>
 
+    <!-- Nueva casilla para profesor -->
+    <div class="form-group">
+      <label for="profesor">Profesor:</label>
+      <input
+        id="profesor"
+        type="text"
+        [(ngModel)]="newCourse.profesor"
+        name="profesor"
+        required
+      />
+    </div>
+
     <div class="form-group">
       <label for="dayOfWeek">Día de la Semana:</label>
       <select
@@ -59,7 +71,7 @@
       </select>
     </div>
 
-    <!-- AQUI, la clase times está FUERA de .form-group -->
+    <!-- La sección de tiempos -->
     <div class="times">
       <div class="time-group">
         <label for="startTime">Hora de Inicio:</label>

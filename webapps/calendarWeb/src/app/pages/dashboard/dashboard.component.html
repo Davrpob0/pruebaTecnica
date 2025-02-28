@@ -26,6 +26,9 @@
         <li *ngIf="userRole === 'admin'" (click)="navigateTo('register')">
           Registrar Curso
         </li>
+        <li *ngIf="userRole === 'admin'" (click)="navigateTo('register-u')">
+          Registrar Usuario
+        </li>
         <li (click)="navigateTo('profile')">Perfil</li>
       </ul>
     </aside>
